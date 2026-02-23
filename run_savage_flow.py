@@ -502,6 +502,66 @@ def push_to_notion(trading_data: dict, email_data: dict) -> dict:
         return None
 
 
+def append_substack_to_notion(page_id: str, substack_post: str) -> bool:
+    """Append the Substack draft content as blocks inside the Notion page"""
+
+    if not NOTION_API_KEY:
+        return False
+
+    # Convert markdown lines to Notion blocks
+    blocks = []
+    for line in substack_post.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith('### '):
+            block_type = 'heading_3'
+            text = stripped[4:]
+        elif stripped.startswith('## '):
+            block_type = 'heading_2'
+            text = stripped[3:]
+        elif stripped.startswith('# '):
+            block_type = 'heading_1'
+            text = stripped[2:]
+        elif stripped.startswith('---'):
+            blocks.append({"object": "block", "type": "divider", "divider": {}})
+            continue
+        else:
+            block_type = 'paragraph'
+            text = stripped
+
+        blocks.append({
+            "object": "block",
+            "type": block_type,
+            block_type: {
+                "rich_text": [{"type": "text", "text": {"content": text[:2000]}}]
+            }
+        })
+
+    # Notion allows max 100 blocks per request — batch if needed
+    url = f"https://api.notion.com/v1/blocks/{page_id}/children"
+    headers = {
+        "Authorization": f"Bearer {NOTION_API_KEY}",
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28"
+    }
+
+    for i in range(0, len(blocks), 100):
+        batch = blocks[i:i + 100]
+        data = json.dumps({"children": batch}).encode('utf-8')
+        req = urllib.request.Request(url, data=data, headers=headers, method='PATCH')
+        try:
+            with urllib.request.urlopen(req) as response:
+                if response.status != 200:
+                    print(f"⚠️  Notion block append failed: {response.status}")
+                    return False
+        except Exception as e:
+            print(f"❌ Error appending substack to Notion: {e}")
+            return False
+
+    return True
+
+
 def upload_file_to_slack(file_path: str, title: str = None) -> bool:
     """Upload a file to Slack (requires SLACK_BOT_TOKEN)"""
     slack_token = os.environ.get("SLACK_BOT_TOKEN")
@@ -630,24 +690,6 @@ def send_slack_notification(email_data: dict, trading_data: dict, notion_url: st
             }
         })
 
-    # Add action buttons
-    buttons = []
-    if notion_url:
-        buttons.append({
-            "type": "button",
-            "text": {
-                "type": "plain_text",
-                "text": "📊 Open Notion",
-                "emoji": True
-            },
-            "url": notion_url,
-            "style": "primary"
-        })
-    if buttons:
-        message_blocks.append({
-            "type": "actions",
-            "elements": buttons
-        })
 
     # Add preview snippet
     if substack_preview:
@@ -918,6 +960,14 @@ def main():
     substack_post, used_ai = generate_substack_post(email_data, trading_data)
     method = "AI (Claude)" if used_ai else "template fallback"
     print(f"  Generated {len(substack_post)} character post via {method}")
+
+    # Append Substack draft into the Notion page body
+    if notion_result:
+        page_id = notion_result.get("id")
+        if page_id and append_substack_to_notion(page_id, substack_post):
+            print("  Appended Substack draft to Notion page")
+        else:
+            print("  ⚠️  Could not append Substack draft to Notion")
     print()
 
     # Step 6: Save outputs
