@@ -194,6 +194,27 @@ def fetch_latest_email(sender: str = None):
         return None
 
 
+def sanitize_markdown(text: str) -> str:
+    """Replace smart/unicode characters with plain ASCII equivalents."""
+    replacements = {
+        '\u2014': '--',   # em dash
+        '\u2013': '-',    # en dash
+        '\u2018': "'",    # left single quote
+        '\u2019': "'",    # right single quote / apostrophe
+        '\u201c': '"',    # left double quote
+        '\u201d': '"',    # right double quote
+        '\u2026': '...',  # ellipsis
+        '\u00a0': ' ',    # non-breaking space
+        '\u2022': '-',    # bullet
+        '\u2192': '->',   # right arrow
+        '\u2190': '<-',   # left arrow
+        '\u2022': '-',    # bullet point
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    return text
+
+
 def clean_email_body(body: str) -> str:
     """Strip Substack boilerplate and source branding from email body"""
     lines = body.split('\n')
@@ -942,6 +963,7 @@ def main():
     # Step 3: Generate Substack post (AI-powered, follows style rubric)
     print("Step 3: Generating Substack post...")
     substack_post, used_ai = generate_substack_post(email_data, trading_data)
+    substack_post = sanitize_markdown(substack_post)
     method = "AI (Claude)" if used_ai else "template fallback"
     print(f"  Generated {len(substack_post)} character post via {method}")
     print()
