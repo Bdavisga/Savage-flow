@@ -118,8 +118,14 @@ End with a signature closing line, a call to action, and optionally a brief SavF
 - Use Markdown (Substack renders it natively)
 - Main title (`#`) must be plain text only — no emojis anywhere
 - Section headers must be plain text only — no emojis. Use this exact branding format: `## [ SAVAGE FLOW ] AUCTION STRUCTURE`, `## [ SAVAGE FLOW ] SCENARIO MATRIX`, etc. The `[ SAVAGE FLOW ]` prefix appears on every section header.
-- Key levels go in markdown tables (| Level | Type | Notes |) — NOT code blocks, as Substack renders code blocks poorly
-- Use bold for level numbers in tables (e.g. `| **6900** | Resistance |`)
+- Key levels must use this bullet format — NO markdown tables (they break in Substack HTML):
+
+  - **6930** -- Primary Resistance -- Rejected hard all week, sellers in control below
+  - **6900** -- Pivot Zone -- Clean split between bull and bear structure
+  - **6805** -- Key Support -- Triple-tested swing low
+
+- Each level on its own bullet line: `- **[level]** -- [Type] -- [Notes]`
+- Use bold for the level number only
 - Bold (**) for critical levels and key terms
 - Tables for scenario comparison when useful
 - Horizontal rules (---) between major sections
