@@ -939,45 +939,16 @@ def main():
         "body": combined_body,
     }
 
-    # Step 3: Create Notion payload
-    print("Step 3: Creating Notion database entry...")
-    notion_payload = create_notion_payload(email_data, trading_data)
-    print(f"  Notion page: {notion_payload['Name']}")
-    print()
-
-    # Step 4: Push to Notion
-    print("Step 4: Pushing to Notion...")
-    notion_result = push_to_notion(trading_data, email_data)
-    if notion_result:
-        page_url = notion_result.get("url", "")
-        print(f"  Created Notion page: {page_url}")
-    else:
-        print("  Notion push skipped or failed")
-    print()
-
-    # Step 5: Generate Substack post (AI-powered)
-    print("Step 5: Generating Substack post...")
+    # Step 3: Generate Substack post (AI-powered, follows style rubric)
+    print("Step 3: Generating Substack post...")
     substack_post, used_ai = generate_substack_post(email_data, trading_data)
     method = "AI (Claude)" if used_ai else "template fallback"
     print(f"  Generated {len(substack_post)} character post via {method}")
-
-    # Append Substack draft into the Notion page body
-    if notion_result:
-        page_id = notion_result.get("id")
-        if page_id and append_substack_to_notion(page_id, substack_post):
-            print("  Appended Substack draft to Notion page")
-        else:
-            print("  ⚠️  Could not append Substack draft to Notion")
     print()
 
-    # Step 6: Save outputs
-    print("Step 6: Saving outputs...")
-
+    # Step 4: Save draft + send Slack notification simultaneously
+    print("Step 4: Saving draft and sending Slack notification...")
     date_suffix = datetime.now().strftime("%m-%d-%y")
-
-    with open(f'{OUTPUT_DIR}/notion_payload.json', 'w') as f:
-        json.dump(notion_payload, f, indent=2)
-    print("  Saved: notion_payload.json")
 
     with open(f'{OUTPUT_DIR}/substack_post.md', 'w') as f:
         f.write(substack_post)
@@ -986,25 +957,32 @@ def main():
     with open(f'{OUTPUT_DIR}/substack_post_{date_suffix}.md', 'w') as f:
         f.write(substack_post)
     print(f"  Saved: substack_post_{date_suffix}.md")
-    print()
 
-    # Step 7: Send Slack notification
-    print("Step 7: Sending Slack notification...")
-    notion_url = notion_result.get("url") if notion_result else None
     substack_file = f'substack_post_{date_suffix}.md'
     send_slack_notification(
         email_data=email_data,
         trading_data=trading_data,
-        notion_url=notion_url,
+        notion_url=None,  # Notion URL added below after push
         substack_preview=substack_post[:200],
         substack_file=substack_file
     )
+    print()
 
-    # Upload Substack draft to Slack
-    upload_file_to_slack(
-        file_path=f'{OUTPUT_DIR}/substack_post.md',
-        title=f"Savage Flow Methodology - {date_suffix}"
-    )
+    # Step 5: Push to Notion and append draft
+    print("Step 5: Pushing to Notion...")
+    notion_payload = create_notion_payload(email_data, trading_data)
+    notion_result = push_to_notion(trading_data, email_data)
+    if notion_result:
+        page_url = notion_result.get("url", "")
+        print(f"  Created Notion page: {page_url}")
+        page_id = notion_result.get("id")
+        if page_id and append_substack_to_notion(page_id, substack_post):
+            print("  Appended Substack draft to Notion page")
+        with open(f'{OUTPUT_DIR}/notion_payload.json', 'w') as f:
+            json.dump(notion_payload, f, indent=2)
+        print("  Saved: notion_payload.json")
+    else:
+        print("  Notion push skipped or failed")
     print()
 
     print("=" * 60)
