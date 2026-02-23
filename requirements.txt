@@ -1,0 +1,10 @@
+# Savage Flow Automation Dependencies
+
+# Core dependencies
+anthropic>=0.40.0
+python-dotenv>=1.0.0
+
+# Slack trigger server (optional - only needed for slash commands)
+flask>=3.0.0
+
+# Note: email, imaplib, json, re, os, urllib are part of Python standard library
