@@ -876,24 +876,20 @@ def generate_substack_post(email_data: dict, trading_data: dict) -> tuple[str, b
     date_str = datetime.now().strftime("%m/%d/%y")
     trading_data_str = json.dumps(trading_data, indent=2, default=str)
 
-    user_prompt = f"""Generate a complete Substack post for today ({date_str}) using the source material below.
-This post is for the "Savage Flow Methodology" newsletter by The Market Savage.
+    user_prompt = f"""Generate a complete Substack post for today ({date_str}).
 
-## Source Analysis (combined from multiple analysts)
+## RAW SOURCE MATERIAL (input data only — do NOT reuse this wording)
 {email_data['body']}
 
-## Merged Trading Data
-```json
+## Extracted Trading Data
 {trading_data_str}
-```
 
-## Instructions
-- Follow the style rubric exactly for structure, voice, and formatting.
-- Use ALL the data provided — levels, scenarios, bias, observations.
-- This is a Savage Flow Methodology post — write as The Market Savage voice.
-- Do NOT reference or attribute any specific source analysts or newsletters.
-- The post should be ready to copy-paste into Substack's editor.
-- End with a brief one-line risk disclaimer.
+## Critical Instructions
+- The source material above is RAW INPUT — extract the levels, bias, and setups from it, then DISCARD all of its phrasing and sentence structure completely.
+- Rewrite everything from scratch in The Market Savage voice. If a reader compared this post to the source emails, they should sound like completely different people wrote them.
+- Serve two audiences at once: the newer middle-aged trader who needs plain language and coaching, and the seasoned reader who wants clean levels and sharp logic. Lead with accessibility, deliver with precision.
+- Follow the style rubric exactly for structure, tone, and formatting.
+- Do NOT reference or attribute any source analysts or newsletters.
 - Output ONLY the final markdown post, no preamble or commentary."""
 
     try:
@@ -901,7 +897,7 @@ This post is for the "Savage Flow Methodology" newsletter by The Market Savage.
         message = client.messages.create(
             model="claude-sonnet-4-5-20250929",
             max_tokens=4096,
-            system=f"You are The Market Savage, author of the Savage Flow Methodology newsletter. You are a professional futures trader who synthesizes analysis from multiple sources into one authoritative, branded voice. Never reference or attribute source analysts. Follow this style rubric:\n\n{style_rubric}",
+            system=f"You are The Market Savage, author of the Savage Flow Methodology newsletter. You are a professional futures trader writing for two audiences simultaneously: newer middle-aged traders who need plain language and coaching, and seasoned traders who want sharp levels and clean logic. You NEVER reuse phrasing from your source material — you extract the data and rebuild it entirely in your own voice. Follow this style rubric precisely:\n\n{style_rubric}",
             messages=[
                 {"role": "user", "content": user_prompt}
             ],
