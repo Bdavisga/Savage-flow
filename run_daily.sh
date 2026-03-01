@@ -13,6 +13,6 @@ LAST_EMAIL_FILE="/Users/brandondavis/Scripts/savage_flow/.last_email_id"
 echo "----------------------------------------" >> "$LOG_FILE"
 echo "$(date): Checking for new emails..." >> "$LOG_FILE"
 
-/usr/bin/python3 /Users/brandondavis/Scripts/savage_flow/run_savage_flow.py >> "$LOG_FILE" 2>&1
+/opt/anaconda3/bin/python3.13 /Users/brandondavis/Scripts/savage_flow/run_savage_flow.py >> "$LOG_FILE" 2>&1
 
 echo "$(date): Check complete" >> "$LOG_FILE"
