@@ -16,7 +16,7 @@ import socket
 from datetime import datetime
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 # Config
 GMAIL_ADDRESS     = os.environ.get("GMAIL_ADDRESS")
